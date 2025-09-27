@@ -1,147 +1,104 @@
 package com.angel.apirest.profiles.services;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import com.angel.apirest.profiles.AbstractServices.UsuarioAbstract;
 import com.angel.apirest.profiles.dto.DocumentoIdentidadDTO;
 import com.angel.apirest.profiles.models.DocumentoIdentidad;
 import com.angel.apirest.profiles.repositorie.DocumentoIdentidadRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
-public class DocumentoIdentidadServices {
+public class DocumentoIdentidadServices extends UsuarioAbstract<DocumentoIdentidad, DocumentoIdentidadDTO> {
 
     @Autowired
-    private  DocumentoIdentidadRepository documentoIdentidadRepository;
+    public DocumentoIdentidadRepository documentoIdentidadRepository;
 
-    private DocumentoIdentidadDTO convertirDTO(DocumentoIdentidad docIdent) {
-        try {
-
-            if (docIdent == null) {
-                return null;
-            }
-
-            DocumentoIdentidadDTO DocIdentiDTO = new DocumentoIdentidadDTO();
-            DocIdentiDTO.setIdDocumentoIdentidadDTO(docIdent.getIdDocumentoIdentidad());
-            DocIdentiDTO.setTipoDocumentoIdentidadDTO(docIdent.getTipoDocumentoIdentidad());
-            DocIdentiDTO.setNumeroDocumentoDTO(docIdent.getNumeroDocumento());
-            DocIdentiDTO.setNombreDTO(docIdent.getNombre());
-            DocIdentiDTO.setApellidoDTO(docIdent.getApellido());
-            DocIdentiDTO.setDireccionDTO(docIdent.getDireccion());
-            DocIdentiDTO.setCiudadDTO(docIdent.getCiudad());
-
-            return DocIdentiDTO;
-
-        } catch (Exception e) {
-            System.out.println("Error al convertir DocumentoIdentidad a DocumentoIdentidadDTO: " + e.getMessage());
+    @Override
+    public DocumentoIdentidadDTO entityToDTO(DocumentoIdentidad entity) {
+        if (entity == null)
             return null;
-        }
+        DocumentoIdentidadDTO dto = new DocumentoIdentidadDTO();
+        dto.setIdDocumentoIdentidadDTO(entity.getIdDocumentoIdentidad());
+        dto.setTipoDocumentoIdentidadDTO(entity.getTipoDocumentoIdentidad());
+        dto.setNumeroDocumentoDTO(entity.getNumeroDocumento());
+        dto.setNombreDTO(entity.getNombre());
+        dto.setApellidoDTO(entity.getApellido());
+        dto.setDireccionDTO(entity.getDireccion());
+        dto.setCiudadDTO(entity.getCiudad());
+        dto.setNacionalidadDTO(entity.getNacionalidad());
+        return dto;
     }
 
-    private DocumentoIdentidad convertirEntidad(DocumentoIdentidadDTO docIdentDTO) {
-        try {
-            if (docIdentDTO == null) {
-                return null;
-            }
-
-            DocumentoIdentidad docIdent = new DocumentoIdentidad();
-            docIdent.setIdDocumentoIdentidad(docIdentDTO.getIdDocumentoIdentidadDTO());
-            docIdent.setTipoDocumentoIdentidad(docIdentDTO.getTipoDocumentoIdentidadDTO());
-            docIdent.setNumeroDocumento(docIdentDTO.getNumeroDocumentoDTO());
-            docIdent.setNombre(docIdentDTO.getNombreDTO());
-            docIdent.setApellido(docIdentDTO.getApellidoDTO());
-            docIdent.setDireccion(docIdentDTO.getDireccionDTO());
-            docIdent.setCiudad(docIdentDTO.getCiudadDTO());
-
-            return docIdent;
-
-        } catch (Exception e) {
-            System.out.println("Error al convertir DocumentoIdentidadDTO a DocumentoIdentidad: " + e.getMessage());
+    @Override
+    public DocumentoIdentidad dtoToEntity(DocumentoIdentidadDTO dto) {
+        if (dto == null)
             return null;
-        }
+        DocumentoIdentidad entity = new DocumentoIdentidad();
+        entity.setIdDocumentoIdentidad(dto.getIdDocumentoIdentidadDTO());
+        entity.setTipoDocumentoIdentidad(dto.getTipoDocumentoIdentidadDTO());
+        entity.setNumeroDocumento(dto.getNumeroDocumentoDTO());
+        entity.setNombre(dto.getNombreDTO());
+        entity.setApellido(dto.getApellidoDTO());
+        entity.setDireccion(dto.getDireccionDTO());
+        entity.setCiudad(dto.getCiudadDTO());
+        entity.setNacionalidad(dto.getNacionalidadDTO());
+        return entity;
     }
 
+    @Override
+    public DocumentoIdentidad updateEntity(DocumentoIdentidad existingEntity, DocumentoIdentidadDTO dto) {
+        if (existingEntity == null || dto == null)
+            return null;
+        existingEntity.setTipoDocumentoIdentidad(dto.getTipoDocumentoIdentidadDTO());
+        existingEntity.setNumeroDocumento(dto.getNumeroDocumentoDTO());
+        existingEntity.setNombre(dto.getNombreDTO());
+        existingEntity.setApellido(dto.getApellidoDTO());
+        existingEntity.setDireccion(dto.getDireccionDTO());
+        existingEntity.setCiudad(dto.getCiudadDTO());
+        existingEntity.setNacionalidad(dto.getNacionalidadDTO());
+        return existingEntity;
+    }
+
+    // ----------------- MÉTODOS PÚBLICOS -----------------
     public List<DocumentoIdentidadDTO> listarDocumentos() {
-        return documentoIdentidadRepository.findAll()
-                .stream()
-                .map(this::convertirDTO)
-                .collect(Collectors.toList());
+        return getAll(documentoIdentidadRepository);
     }
 
-    public DocumentoIdentidadDTO FindByIdDocument(Long IdDocumentoIdentidad) {
-        try {
-            DocumentoIdentidad docuIdent = documentoIdentidadRepository.findById(IdDocumentoIdentidad).orElse(null);
-            return convertirDTO(docuIdent);
-        } catch (Exception e) {
-            System.out.println("Error al buscar DocumentoIdentidad por ID: " + e.getMessage());
+    public DocumentoIdentidadDTO FindByIdDocument(Long id) {
+        return getById(id, documentoIdentidadRepository);
+    }
+
+    public DocumentoIdentidadDTO CreateDocIdent(DocumentoIdentidadDTO dto) {
+        if (dto == null)
             return null;
-        }
+        // Convertir DTO a Entity
+        DocumentoIdentidad entity = dtoToEntity(dto);
+        // Guardar Entity
+        DocumentoIdentidad saved = documentoIdentidadRepository.save(entity);
+        // Devolver DTO
+        return entityToDTO(saved);
     }
 
-    public Long FindbyNumIdentity(String NumeroDocumento) {
-        try {
-            Optional<DocumentoIdentidad> docident = documentoIdentidadRepository.findByNumeroDocumento(NumeroDocumento);
-            return docident.map(DocumentoIdentidad::getIdDocumentoIdentidad).orElse(null);
-
-        } catch (Exception e) {
-            System.out.println("Error al buscar DocumentoIdentidad por atributos: " + e.getMessage());
-            return null;
-        }
+    public boolean DeleteDocIdent(Long id) {
+        return delete(id, documentoIdentidadRepository);
     }
 
-    public void CreateDocIdent(DocumentoIdentidadDTO docIdentDTO) {
-        try {
-            if (docIdentDTO == null) {
-                throw new IllegalArgumentException("El DocumentoIdentidadDTO no puede ser nulo");
-            }
-            DocumentoIdentidad docIdent = convertirEntidad(docIdentDTO);
-            documentoIdentidadRepository.save(docIdent);
-            System.out.println("DocumentoIdentidad creado exitosamente");
-        } catch (Exception e) {
-            System.out.println("Error al crear DocumentoIdentidad: " + e.getMessage());
-        }
+    public boolean UpdateDocIdent(DocumentoIdentidadDTO dto) {
+        if (dto == null || dto.getIdDocumentoIdentidadDTO() == null)
+            return false;
+        DocumentoIdentidad updated = updateEntity(
+                documentoIdentidadRepository.findById(dto.getIdDocumentoIdentidadDTO()).orElse(null), dto);
+        if (updated == null)
+            return false;
+        documentoIdentidadRepository.save(updated);
+        return true;
     }
 
-    public boolean DeleteDocIdent(Long IdDocumentoIdentidad) {
-        boolean isDeleted = false;
-        try {
-            if (documentoIdentidadRepository.existsById(IdDocumentoIdentidad)) {
-                documentoIdentidadRepository.deleteById(IdDocumentoIdentidad);
-                isDeleted = true;
-            } else {
-                System.out.println("El DocumentoIdentidad con ID " + IdDocumentoIdentidad + " no existe.");
-                isDeleted = false;
-            }
-        } catch (Exception e) {
-            System.out.println("Error al eliminar DocumentoIdentidad: " + e.getMessage());
-            isDeleted = false;
-        }
-        return isDeleted;
+    public Long FindbyNumIdentity(String numeroDocumento) {
+        Optional<DocumentoIdentidad> docident = documentoIdentidadRepository.findByNumeroDocumento(numeroDocumento);
+        return docident.map(DocumentoIdentidad::getIdDocumentoIdentidad).orElse(null);
     }
-
-    public boolean UpdateDocIdent(DocumentoIdentidadDTO docIdentDTO) {
-        boolean isUpdated = false;
-        try {
-            if (docIdentDTO == null || docIdentDTO.getIdDocumentoIdentidadDTO() == null) {
-                throw new IllegalArgumentException("El DocumentoIdentidadDTO o su ID no pueden ser nulos");
-            }
-
-            if (documentoIdentidadRepository.existsById(docIdentDTO.getIdDocumentoIdentidadDTO())) {
-                DocumentoIdentidad docIdent = convertirEntidad(docIdentDTO);
-                documentoIdentidadRepository.save(docIdent);
-                isUpdated = true;
-            } else {
-                System.out.println(
-                        "El DocumentoIdentidad con ID " + docIdentDTO.getIdDocumentoIdentidadDTO() + " no existe.");
-                isUpdated = false;
-            }
-        } catch (Exception e) {
-            System.out.println("Error al actualizar DocumentoIdentidad: " + e.getMessage());
-            isUpdated = false;
-        }
-        return isUpdated;
-    }
-
 }

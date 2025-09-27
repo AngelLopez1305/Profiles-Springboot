@@ -11,10 +11,8 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @ToString
-
 public class DocumentoIdentidadDTO {
 
-    @NotBlank
     private Long IdDocumentoIdentidadDTO;
 
     @NotBlank
@@ -28,13 +26,16 @@ public class DocumentoIdentidadDTO {
 
     @NotBlank
     private String ApellidoDTO;
-    
+
     @NotBlank
-    @Size(min = 120 ,max = 150)
+    @Size(max = 150) // Se quitó el min exagerado
     private String DireccionDTO;
 
     @NotBlank
-    @Size(min = 50 ,max = 100)
+    @Size(max = 100)
     private String CiudadDTO;
 
+    @NotBlank
+    @Size(max = 100)
+    private String NacionalidadDTO;
 }

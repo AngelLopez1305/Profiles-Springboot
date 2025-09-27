@@ -1,6 +1,5 @@
 package com.angel.apirest.profiles.models;
 
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,7 +17,6 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @ToString
-
 public class DocumentoIdentidad {
 
     @Id
@@ -26,22 +24,24 @@ public class DocumentoIdentidad {
     @Column(name = "IdDocumentoIdentidad", nullable = false, unique = true)
     private Long IdDocumentoIdentidad;
 
-    @Column(name = "TipoDocumentoIdentidad",nullable = false, length = 20)
+    @Column(name = "TipoDocumentoIdentidad", nullable = false, length = 50)
     private String TipoDocumentoIdentidad;
 
-    @Column(name = "NumeroDocumento",nullable = false, length = 100, unique = true)
+    @Column(name = "NumeroDocumento", nullable = false, length = 100, unique = true)
     private String numeroDocumento;
 
-    @Column(name = "NombreUsuario",nullable = false, length = 50)
+    @Column(name = "NombreUsuario", nullable = false, length = 50)
     private String Nombre;
 
-    @Column(name = "ApellidoUsuario",nullable = false, length = 50)
+    @Column(name = "ApellidoUsuario", nullable = false, length = 50)
     private String Apellido;
-    
-    @Column(name = "Direccion",nullable = true, length = 100)
+
+    @Column(name = "Direccion", nullable = true, length = 100)
     private String Direccion;
 
-    @Column(name = "Ciudad",nullable = true, length = 50)
+    @Column(name = "Ciudad", nullable = true, length = 100)
     private String Ciudad;
 
+    @Column(name = "Nacionalidad", nullable = true, length = 100)
+    private String Nacionalidad;
 }

@@ -1,11 +1,12 @@
 package com.angel.apirest.profiles.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import jakarta.validation.constraints.NotNull;
 
 @Getter
 @Setter
@@ -13,15 +14,15 @@ import lombok.ToString;
 @ToString
 public class ContrlorRequest {
 
+    private Long IdUsuarioDTO;
 
-    @NotEmpty
+    @NotNull
+    @Valid
     private DocumentoIdentidadDTO documentoIdentidad;
-    
+
     @NotBlank
     private String correoElectronico;
-    
+
     @NotBlank
     private String telefono;
-
-
 }

@@ -1,18 +1,21 @@
 package com.angel.apirest.profiles.services;
 
-import com.angel.apirest.profiles.models.*;
-import com.angel.apirest.profiles.dto.*;
-import com.angel.apirest.profiles.repositorie.*;
+import com.angel.apirest.profiles.AbstractServices.UsuarioAbstract;
+import com.angel.apirest.profiles.dto.UsuarioDTO;
+import com.angel.apirest.profiles.dto.DocumentoIdentidadDTO;
+import com.angel.apirest.profiles.models.Usuario;
+import com.angel.apirest.profiles.models.DocumentoIdentidad;
+import com.angel.apirest.profiles.repositorie.UsuarioRepository;
+import com.angel.apirest.profiles.repositorie.DocumentoIdentidadRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
-public class UsuarioServices {
+public class UsuarioServices extends UsuarioAbstract<Usuario, UsuarioDTO> {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -21,181 +24,143 @@ public class UsuarioServices {
     private DocumentoIdentidadServices documentoIdentidadServices;
 
     @Autowired
-    private DocumentoIdentidadRepository docuId;
+    private DocumentoIdentidadRepository documentoIdentidadRepository;
 
-    private List<UsuarioDTO> EntitytoDTO() {
-        try {
-            List<Usuario> usuarios = usuarioRepository.findAll();
-            List<UsuarioDTO> usuarioDTOList = new ArrayList<>();
-
-            for (Usuario u : usuarios) {
-                UsuarioDTO dto = new UsuarioDTO();
-                dto.setIdUsuarioDTO(u.getIdUsuario());
-                dto.setCorreoElectronicoDTO(u.getCorreoElectronico());
-                dto.setTelefonoDTO(u.getTelefono());
-                dto.setIdDocumentoIdentidad(u.getDocumentoIdentidad().getIdDocumentoIdentidad());
-                usuarioDTOList.add(dto);
-            }
-
-            return usuarioDTOList;
-        } catch (Exception e) {
-            System.out.println("Error en la conversión de Entity a DTO: " + e);
+    @Override
+    public UsuarioDTO entityToDTO(Usuario entity) {
+        if (entity == null)
             return null;
-        }
+
+        UsuarioDTO dto = new UsuarioDTO();
+        dto.setIdUsuarioDTO(entity.getIdUsuario());
+        dto.setCorreoElectronicoDTO(entity.getCorreoElectronico());
+        dto.setTelefonoDTO(entity.getTelefono());
+        dto.setIdDocumentoIdentidad(
+                entity.getDocumentoIdentidad() != null ? entity.getDocumentoIdentidad().getIdDocumentoIdentidad()
+                        : null);
+        return dto;
     }
 
-    private Usuario DTOtoEntity(UsuarioDTO usuarioDTO) {
-        try {
-            if (usuarioDTO == null)
-                return null;
+    @Override
+    public Usuario dtoToEntity(UsuarioDTO dto) {
+        if (dto == null)
+            return null;
 
-            Usuario usu = new Usuario();
-            usu.setIdUsuario(usuarioDTO.getIdUsuarioDTO());
-            usu.setCorreoElectronico(usuarioDTO.getCorreoElectronicoDTO());
-            usu.setTelefono(usuarioDTO.getTelefonoDTO());
+        Usuario entity = new Usuario();
+        entity.setIdUsuario(dto.getIdUsuarioDTO());
+        entity.setCorreoElectronico(dto.getCorreoElectronicoDTO());
+        entity.setTelefono(dto.getTelefonoDTO());
 
-            DocumentoIdentidad doc = docuId.findById(usuarioDTO.getIdDocumentoIdentidad())
+        if (dto.getIdDocumentoIdentidad() != null) {
+            DocumentoIdentidad doc = documentoIdentidadRepository.findById(dto.getIdDocumentoIdentidad())
                     .orElseThrow(() -> new RuntimeException("Documento de identidad no encontrado"));
-
-            usu.setDocumentoIdentidad(doc);
-            return usu;
-        } catch (Exception e) {
-            System.out.println("Error en la conversión de DTO a Entity: " + e.getMessage());
-            return null;
+            entity.setDocumentoIdentidad(doc);
         }
+
+        return entity;
     }
 
-    public List<UsuarioDTO> listarUsuarios() {
-        return EntitytoDTO();
+    @Override
+    public Usuario updateEntity(Usuario existingEntity, UsuarioDTO dto) {
+        if (existingEntity == null || dto == null)
+            return existingEntity;
+        existingEntity.setCorreoElectronico(dto.getCorreoElectronicoDTO());
+        existingEntity.setTelefono(dto.getTelefonoDTO());
+        return existingEntity;
     }
 
-    public UsuarioDTO GetUsuarioById(Long idUsuario) {
-        try {
-            if (idUsuario == null || idUsuario <= 0)
-                return null;
-
-            Usuario usu = usuarioRepository.findById(idUsuario).orElse(null);
-            if (usu == null)
-                return null;
-
-            UsuarioDTO dto = new UsuarioDTO();
-            dto.setIdUsuarioDTO(usu.getIdUsuario());
-            dto.setCorreoElectronicoDTO(usu.getCorreoElectronico());
-            dto.setTelefonoDTO(usu.getTelefono());
-            dto.setIdDocumentoIdentidad(usu.getDocumentoIdentidad().getIdDocumentoIdentidad());
-            return dto;
-
-        } catch (Exception e) {
-            System.out.println("Error al obtener el usuario por ID: " + e);
+    // Crear usuario con documento
+    public UsuarioDTO createUsuarioWithDoc(DocumentoIdentidadDTO docDTO, String correo, String telefono) {
+        DocumentoIdentidadDTO savedDoc = documentoIdentidadServices.CreateDocIdent(docDTO);
+        if (savedDoc == null)
             return null;
-        }
+
+        UsuarioDTO usuarioDTO = new UsuarioDTO();
+        usuarioDTO.setCorreoElectronicoDTO(correo);
+        usuarioDTO.setTelefonoDTO(telefono);
+        usuarioDTO.setIdDocumentoIdentidad(savedDoc.getIdDocumentoIdentidadDTO());
+
+        return create(usuarioDTO, usuarioRepository);
     }
 
+    // Actualizar usuario y documento
+    public UsuarioDTO updateUsuarioWithDoc(Long idUsuario, String correo, String telefono,
+                                           DocumentoIdentidadDTO docDTO) {
+        Usuario existing = usuarioRepository.findById(idUsuario).orElse(null);
+        if (existing == null)
+            return null;
+
+        existing.setCorreoElectronico(correo);
+        existing.setTelefono(telefono);
+
+        DocumentoIdentidad doc = existing.getDocumentoIdentidad();
+        if (doc == null)
+            doc = new DocumentoIdentidad();
+
+        doc.setTipoDocumentoIdentidad(docDTO.getTipoDocumentoIdentidadDTO());
+        doc.setNumeroDocumento(docDTO.getNumeroDocumentoDTO());
+        doc.setNombre(docDTO.getNombreDTO());
+        doc.setApellido(docDTO.getApellidoDTO());
+        doc.setDireccion(docDTO.getDireccionDTO());
+        doc.setCiudad(docDTO.getCiudadDTO());
+        doc.setNacionalidad(docDTO.getNacionalidadDTO());
+
+        existing.setDocumentoIdentidad(doc);
+        usuarioRepository.save(existing);
+
+        return entityToDTO(existing);
+    }
+
+    // Obtener detalles completos de usuario
     public Map<String, Object> getUsuarioDetailsMap(Long idUsuario) {
-        UsuarioDTO usuarioDTO = GetUsuarioById(idUsuario);
-        if (usuarioDTO == null)
+        Usuario usuario = usuarioRepository.findById(idUsuario).orElse(null);
+        if (usuario == null)
             return null;
 
-        DocumentoIdentidadDTO docDTO = documentoIdentidadServices
-                .FindByIdDocument(usuarioDTO.getIdDocumentoIdentidad());
-        if (docDTO == null)
+        DocumentoIdentidad doc = usuario.getDocumentoIdentidad();
+        if (doc == null)
             return null;
 
         Map<String, Object> response = new HashMap<>();
-        response.put("idUsuario", usuarioDTO.getIdUsuarioDTO());
-        response.put("correoElectronico", usuarioDTO.getCorreoElectronicoDTO());
-        response.put("telefono", usuarioDTO.getTelefonoDTO());
-        response.put("idDocumentoIdentidad", docDTO.getIdDocumentoIdentidadDTO());
-        response.put("tipoDocumentoIdentidad", docDTO.getTipoDocumentoIdentidadDTO());
-        response.put("numeroDocumento", docDTO.getNumeroDocumentoDTO());
-        response.put("nombre", docDTO.getNombreDTO());
-        response.put("apellido", docDTO.getApellidoDTO());
-        response.put("direccion", docDTO.getDireccionDTO());
-        response.put("ciudad", docDTO.getCiudadDTO());
-
+        response.put("idUsuario", usuario.getIdUsuario());
+        response.put("correoElectronico", usuario.getCorreoElectronico());
+        response.put("telefono", usuario.getTelefono());
+        response.put("idDocumentoIdentidad", doc.getIdDocumentoIdentidad());
+        response.put("tipoDocumentoIdentidad", doc.getTipoDocumentoIdentidad());
+        response.put("numeroDocumento", doc.getNumeroDocumento());
+        response.put("nombre", doc.getNombre());
+        response.put("apellido", doc.getApellido());
+        response.put("direccion", doc.getDireccion());
+        response.put("ciudad", doc.getCiudad());
+        response.put("nacionalidad", doc.getNacionalidad());
         return response;
     }
 
-    public UsuarioDTO CreateDoctIdent(DocumentoIdentidadDTO docuIdDTO,
-            String correoElectronicoDTO, String telefonoDTO) {
-        try {
-            if (docuIdDTO == null)
-                return null;
-
-            documentoIdentidadServices.CreateDocIdent(docuIdDTO);
-            Long idDocuId = documentoIdentidadServices.FindbyNumIdentity(docuIdDTO.getNumeroDocumentoDTO());
-
-            UsuarioDTO usuDTO = new UsuarioDTO();
-            usuDTO.setCorreoElectronicoDTO(correoElectronicoDTO);
-            usuDTO.setTelefonoDTO(telefonoDTO);
-            usuDTO.setIdDocumentoIdentidad(idDocuId);
-
-            return CreateUsuario(usuDTO);
-
-        } catch (Exception e) {
-            System.out.println("Error al crear el usuario con documento de identidad: " + e);
-            return null;
-        }
-    }
-
-    public UsuarioDTO CreateUsuario(UsuarioDTO usuDTO) {
-        try {
-            if (usuDTO == null)
-                return null;
-
-            Usuario usu = DTOtoEntity(usuDTO);
-            Usuario savedUsuario = usuarioRepository.save(usu);
-
-            UsuarioDTO savedDTO = new UsuarioDTO();
-            savedDTO.setIdUsuarioDTO(savedUsuario.getIdUsuario());
-            savedDTO.setCorreoElectronicoDTO(savedUsuario.getCorreoElectronico());
-            savedDTO.setTelefonoDTO(savedUsuario.getTelefono());
-            savedDTO.setIdDocumentoIdentidad(savedUsuario.getDocumentoIdentidad().getIdDocumentoIdentidad());
-
-            return savedDTO;
-        } catch (Exception e) {
-            System.out.println("Error al crear el usuario: " + e);
-            return null;
-        }
-    }
-
-    public UsuarioDTO UpdateUsuario(UsuarioDTO usuDTO) {
-        try {
-            if (usuDTO == null || usuDTO.getIdUsuarioDTO() == null || usuDTO.getIdUsuarioDTO() <= 0)
-                return null;
-
-            if (!usuarioRepository.existsById(usuDTO.getIdUsuarioDTO()))
-                return null;
-
-            Usuario usu = DTOtoEntity(usuDTO);
-            Usuario updatedUsuario = usuarioRepository.save(usu);
-
-            UsuarioDTO updatedDTO = new UsuarioDTO();
-            updatedDTO.setIdUsuarioDTO(updatedUsuario.getIdUsuario());
-            updatedDTO.setCorreoElectronicoDTO(updatedUsuario.getCorreoElectronico());
-            updatedDTO.setTelefonoDTO(updatedUsuario.getTelefono());
-            updatedDTO.setIdDocumentoIdentidad(updatedUsuario.getDocumentoIdentidad().getIdDocumentoIdentidad());
-
-            return updatedDTO;
-        } catch (Exception e) {
-            System.out.println("Error al actualizar el usuario: " + e);
-            return null;
-        }
-    }
-
-    public boolean DeleteUsuario(Long idUsuario) {
-        try {
-            if (idUsuario == null || idUsuario <= 0)
-                return false;
-
-            if (!usuarioRepository.existsById(idUsuario))
-                return false;
-
-            usuarioRepository.deleteById(idUsuario);
-            return true;
-        } catch (Exception e) {
-            System.out.println("Error al eliminar el usuario: " + e);
+    // 🔥 Eliminar usuario junto con su documento
+    public boolean deleteUsuarioAndDoc(Long idUsuario) {
+        Usuario usuario = usuarioRepository.findById(idUsuario).orElse(null);
+        if (usuario == null) {
             return false;
         }
+
+        DocumentoIdentidad doc = usuario.getDocumentoIdentidad();
+
+        usuarioRepository.delete(usuario);
+
+        if (doc != null && documentoIdentidadRepository.existsById(doc.getIdDocumentoIdentidad())) {
+            documentoIdentidadRepository.delete(doc);
+        }
+
+        return true;
+    }
+
+    // Listar todos los usuarios
+    public List<UsuarioDTO> listarUsuarios() {
+        return getAll(usuarioRepository);
+    }
+
+    // Buscar usuario por ID
+    public UsuarioDTO getUsuarioById(Long id) {
+        return entityToDTO(usuarioRepository.findById(id).orElse(null));
     }
 }

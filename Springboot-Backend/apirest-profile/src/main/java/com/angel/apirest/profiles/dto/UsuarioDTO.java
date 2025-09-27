@@ -28,5 +28,4 @@ public class UsuarioDTO {
 
     @NotEmpty
     private Long IdDocumentoIdentidad;
-
 }

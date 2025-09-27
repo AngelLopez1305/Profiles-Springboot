@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-ApirestProfileApplication<apirest-profile>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.angel.apirest.profiles.ApirestProfileApplication",
+            "projectName": "apirest-profile",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

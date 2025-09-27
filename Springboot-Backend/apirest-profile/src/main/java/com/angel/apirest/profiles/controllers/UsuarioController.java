@@ -6,8 +6,8 @@ import com.angel.apirest.profiles.services.UsuarioServices;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -23,68 +23,70 @@ public class UsuarioController {
     }
 
     @PostMapping("/saveusuario")
-    public ResponseEntity<?> saveUsuario(@RequestBody ContrlorRequest request) {
-        UsuarioDTO usuarioDTO = usuarioService.CreateDoctIdent(
+    public ResponseEntity<?> saveUsuario(@Valid @RequestBody ContrlorRequest request) {
+        UsuarioDTO usuarioDTO = usuarioService.createUsuarioWithDoc(
                 request.getDocumentoIdentidad(),
                 request.getCorreoElectronico(),
                 request.getTelefono());
 
-        if (usuarioDTO == null) {
+        if (usuarioDTO == null)
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new MensajeResponse("No se pudo crear el usuario."));
-        }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioDTO);
     }
 
-    @DeleteMapping("/deleteusuario/{id}")
-    public ResponseEntity<?> deleteUsuario(@PathVariable Long id) {
-        boolean eliminado = usuarioService.DeleteUsuario(id);
-
-        if (eliminado) {
-            return ResponseEntity.ok(new MensajeResponse("Usuario eliminado correctamente."));
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new MensajeResponse("Usuario no encontrado."));
-        }
-    }
-
     @PutMapping("/updateusuario")
-    public ResponseEntity<?> updateUsuario(@RequestBody UsuarioDTO usuarioDTO) {
-        UsuarioDTO updatedUsuario = usuarioService.UpdateUsuario(usuarioDTO);
+    public ResponseEntity<?> updateUsuario(@Valid @RequestBody ContrlorRequest request) {
+        UsuarioDTO updated = usuarioService.updateUsuarioWithDoc(
+                request.getIdUsuarioDTO(),
+                request.getCorreoElectronico(),
+                request.getTelefono(),
+                request.getDocumentoIdentidad());
 
-        if (updatedUsuario == null) {
+        if (updated == null)
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new MensajeResponse("No se pudo actualizar el usuario."));
-        }
 
-        return ResponseEntity.ok(updatedUsuario);
+        return ResponseEntity.ok(updated);
     }
 
-    @GetMapping("/getusuario/{id}")
-    public ResponseEntity<?> getUsuarioById(@PathVariable Long id) {
-        Map<String, Object> usuarioCompleto = usuarioService.getUsuarioDetailsMap(id);
+    // ----------------- DELETE Usuario + Documento -----------------
+    @DeleteMapping("/deleteusuario/{id}")
+    public ResponseEntity<?> deleteUsuarioAndDoc(@PathVariable Long id) {
+        boolean eliminado = usuarioService.deleteUsuarioAndDoc(id);
 
-        if (usuarioCompleto == null) {
+        if (eliminado)
+            return ResponseEntity.ok(new MensajeResponse("Usuario y documento eliminados correctamente."));
+        else
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new MensajeResponse("Usuario no encontrado."));
-        }
+    }
 
-        return ResponseEntity.ok(usuarioCompleto);
+    // ----------------- GETs -----------------
+    @GetMapping("/getusuario/{id}")
+    public ResponseEntity<?> getUsuarioById(@PathVariable Long id) {
+        Map<String, Object> usuario = usuarioService.getUsuarioDetailsMap(id);
+
+        if (usuario == null)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MensajeResponse("Usuario no encontrado."));
+
+        return ResponseEntity.ok(usuario);
     }
 
     @GetMapping("/getallusuario")
     public ResponseEntity<?> getAllUsuarios() {
         List<UsuarioDTO> usuarios = usuarioService.listarUsuarios();
 
-        if (usuarios == null || usuarios.isEmpty()) {
+        if (usuarios == null || usuarios.isEmpty())
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new MensajeResponse("No se encontraron usuarios."));
-        }
 
         return ResponseEntity.ok(usuarios);
     }
 
+    // Clase interna para mensajes
     static class MensajeResponse {
         private String mensaje;
 

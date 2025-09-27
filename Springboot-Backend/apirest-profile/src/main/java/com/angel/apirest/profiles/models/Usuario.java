@@ -19,7 +19,6 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @ToString
-
 public class Usuario {
 
     @Id
@@ -32,8 +31,7 @@ public class Usuario {
     @Column(name = "Telefono", nullable = true, length = 15)
     private String Telefono;
 
-    @OneToOne
+    @OneToOne(optional = false)
     @JoinColumn(name = "IdDocumentoIdentidad", referencedColumnName = "IdDocumentoIdentidad")
     private DocumentoIdentidad documentoIdentidad;
-
 }
